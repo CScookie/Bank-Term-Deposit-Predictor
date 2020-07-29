@@ -134,3 +134,249 @@ Unique values of 'marital': ['married' 'single' 'divorced']
 Unique values of 'education': ['basic.4y' 'high.school' 'basic.6y' 'professional.course' 'basic.9y'
  'university.degree' 'illiterate']
 ```
+
+### Next we have to encode categorical data in order for my model to be trained
+```python
+df['default'] = df['default'].map({'yes':1, 'no':0})
+df['housing'] = df['housing'].map({'yes':1, 'no':0})
+df['loan'] = df['loan'].map({'yes':1, 'no':0})
+df['purchased'] = df['purchased'].map({'yes':1, 'no':0})
+
+```
+
+### Some categories in the data can be grouped together
+
+```python
+#we will group 'basic.4y' 'high.school' 'basic.6y' and 'basic.9y' as one category
+
+
+df.loc[df['education'] == 'basic.4y', 'education'] = 'high.school'
+df.loc[df['education'] == 'basic.6y', 'education'] = 'high.school'
+df.loc[df['education'] == 'basic.9y', 'education'] = 'high.school'
+```
+
+### Checking if columns are correctly processed such as correct mapping and no extra values.
+```python
+print("Unique values of 'default':" , df['default'].unique())
+print("Unique values of 'housing':" , df['housing'].unique())
+print("Unique values of 'loan':" , df['loan'].unique())
+print("Unique values of 'purchased':" , df['purchased'].unique())
+print("Unique values of 'job':" , df['job'].unique())
+print("Unique values of 'marital':" , df['marital'].unique())
+print("Unique values of 'education':" , df['education'].unique())
+```
+Output:
+```
+Unique values of 'default': [0 1]
+Unique values of 'housing': [0 1]
+Unique values of 'loan': [0 1]
+Unique values of 'purchased': [0 1]
+Unique values of 'job': ['housemaid' 'services' 'admin.' 'technician' 'blue-collar' 'unemployed'
+ 'retired' 'entrepreneur' 'management' 'student' 'self-employed']
+Unique values of 'marital': ['married' 'single' 'divorced']
+Unique values of 'education': ['high.school' 'professional.course' 'university.degree' 'illiterate']
+```
+
+### Getting dummies for column 'job', 'education' and 'marital'. drop_first used to avoid dependency during model training
+```python
+job_columns = pd.get_dummies(df['job'], drop_first = True)
+education_columns = pd.get_dummies(df['education'], drop_first = True)
+marital_columns = pd.get_dummies(df['marital'], drop_first = True)
+```
+
+### Now that encoding is done, previous categorical columns can be dropped.
+```python
+#drop column 'job', 'marital' and 'education' as it will not be used anymore
+
+df_without_job = df.drop(['job'], axis=1)
+df_without_job_marital = df_without_job.drop(['marital'], axis=1)
+df_without_job_marital_education = df_without_job_marital.drop(['education'], axis=1)
+```
+
+### Concatenating all the required columns
+```python
+df_with_dummies = pd.concat([df_without_job_marital_education, job_columns, marital_columns, education_columns], axis=1)
+```
+
+### The dataframe columns are messy now. We will have to reorder ensuring our target(aka purchase) is at the right most column
+
+```python
+# Get the list of all the column names
+df_with_dummies.columns.values
+```
+Output:
+```
+array(['age', 'default', 'housing', 'loan', 'emp.var.rate',
+       'cons.price.idx', 'cons.conf.idx', 'euribor3m', 'nr.employed',
+       'purchased', 'blue-collar', 'entrepreneur', 'housemaid',
+       'management', 'retired', 'self-employed', 'services', 'student',
+       'technician', 'unemployed', 'married', 'single', 'illiterate',
+       'professional.course', 'university.degree'], dtype=object)
+```
+```python
+#reorder columns such that purchase is the last column
+
+column_names_reordered = ['blue-collar', 'entrepreneur', 'housemaid',
+       'management', 'retired', 'self-employed', 'services', 'student',
+       'technician', 'unemployed', 'married', 'single', 'illiterate',
+       'professional.course', 'university.degree', 'age', 'default', 'housing', 'loan', 'emp.var.rate',
+       'cons.price.idx', 'cons.conf.idx', 'euribor3m', 'nr.employed',
+       'purchased']
+
+df_reordered = df_with_dummies[column_names_reordered]
+```
+
+### Before training the model, we have to check if the dataframe is balance
+```python
+#check if data is balance
+
+print('Total number of purchases: ', df_reordered['purchased'].sum())
+print('Total number of rows:  ', df_reordered['purchased'].shape[0])
+print('Percentage of customers purchasing term deposit: ', df_reordered['purchased'].sum()/df_reordered['purchased'].shape[0] *100, '%')
+```
+Output:
+```
+Total number of purchases:  3859
+Total number of rows:   30488
+Percentage of customers purchasing term deposit:  12.65743899239045 %
+```
+
+### From the above result, 12%. Using this imbalanced data will cause the model to fit the majority class better to improve the overall accuracy. we do not want that. So we will have to balance the data
+```python
+#shuffle dataframe
+
+from sklearn.utils import shuffle
+
+df_reordered = shuffle(df_reordered)
+df_reordered.reset_index(inplace=True, drop=True)
+
+#remove excess 0s
+zero_counter = 0
+counter = 0
+indices_to_remove =[]
+
+
+for index, row in df_reordered.iterrows():
+    if row['purchased'] == 0:
+        zero_counter+=1
+        if zero_counter >= df_reordered['purchased'].sum():
+            indices_to_remove.append(index)
+        
+df_balanced = df_reordered.drop(indices_to_remove)
+df_balanced.reset_index(inplace=True, drop=True)
+
+#check if targets are balance (approx. 50%)
+
+print(df_balanced['purchased'].sum())
+print(df_balanced['purchased'].shape[0])
+print(df_balanced['purchased'].sum()/df_balanced['purchased'].shape[0])
+```
+Output:
+```
+3859
+7717
+0.5000647920176234
+```
+### Now we separate unscaled inputs and targets
+```python
+unscaled_inputs = df_balanced.iloc[:,:-1]
+targets = df_balanced['purchased']
+```
+
+### Standardize unscaled inputs other than dummies
+```python
+from sklearn.preprocessing import StandardScaler
+cols_to_norm = ['age','emp.var.rate', 'cons.price.idx', 
+                'cons.conf.idx', 'euribor3m','nr.employed']
+
+unscaled_inputs[cols_to_norm] = StandardScaler().fit_transform(unscaled_inputs[cols_to_norm])
+
+scaled_inputs = unscaled_inputs.copy()
+```
+# 2. Model Training
+
+### Start by splitting data into train and test data
+```python
+from sklearn.model_selection import train_test_split
+
+x_train, x_test, y_train, y_test = train_test_split(scaled_inputs, targets, #train_size = 0.8, 
+                                                                            test_size = 0.2, random_state = 20)
+```
+
+### Checking if the data is properly splitted
+```python
+print (x_train.shape, y_train.shape)
+print (x_test.shape, y_test.shape)
+```
+Output:
+```
+(6173, 24) (6173,)
+(1544, 24) (1544,)
+```
+
+### Model training
+```python
+# import the LogReg model from sklearn
+from sklearn.linear_model import LogisticRegression
+
+# create a logistic regression object
+reg = LogisticRegression()
+
+# fit our train inputs that is basically the whole training part of the machine learning
+reg.fit(x_train,y_train)
+
+# assess the train accuracy of the model
+print('Train accuracy: ',reg.score(x_train,y_train), '\n')
+
+# get the intercept (bias) of our model
+print('Model intercept: ',reg.intercept_, '\n')
+
+#get the coefficient of our model
+print('Model coefficient: ',reg.coef_,  '\n')
+```
+Output:
+```
+Train accuracy:  0.725417139154382 
+
+Model intercept:  [-0.14279162] 
+
+Model coefficient:  [[-0.28299482 -0.16563471  0.07670685 -0.06319707  0.64902246 -0.08994387
+  -0.22619193  0.37842006  0.04777322  0.14337138  0.10680356  0.22762018
+   0.42959896  0.09573891  0.10708743  0.06352828  0.         -0.01442343
+   0.03399157 -0.89226125  0.24332263  0.04710026  0.4296626  -0.72925715]] 
+```
+### Creating a summary table
+```python
+# save the names of the columns in an ad-hoc variable
+feature_name = unscaled_inputs.columns.values
+
+# creates summary table for visualization
+summary_table = pd.DataFrame (columns=['Feature name'], data = feature_name)
+
+# add the coefficient values to the summary table
+summary_table['Coefficient'] = np.transpose(reg.coef_)
+
+
+#summary table move all indices by 1
+summary_table.index = summary_table.index + 1
+
+# add the intercept at index 0
+summary_table.loc[0] = ['Intercept', reg.intercept_[0]]
+
+# sort the df by index
+summary_table = summary_table.sort_index()
+
+# create a new Series called: 'Odds ratio' which will show the odds ratio of each feature
+summary_table['Odds_ratio'] = np.exp(summary_table.Coefficient)
+
+#displays all rows
+pd.options.display.max_rows = None
+
+#sort by column 'Odds_ratio'
+summary_table = summary_table.sort_values('Odds_ratio', ascending=False)
+
+# display the summary table
+summary_table
+```
+Output:
+<img src="README_src/summarytable.png" alt="Summary Table" width=300>
