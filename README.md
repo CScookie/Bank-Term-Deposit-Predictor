@@ -379,4 +379,30 @@ summary_table = summary_table.sort_values('Odds_ratio', ascending=False)
 summary_table
 ```
 Output:
-<img src="README_src/summarytable.png" alt="Summary Table" width=300>
+<img src="README_src/summarytable.PNG" alt="Summary Table" width=300>
+
+# 3. Model Testing
+### Assess the test accuracy of the model\
+```python
+reg.score(x_test,y_test)
+```
+Output:
+```
+0.7435233160621761
+```
+
+### Find the predicted probabilities of each class the first column shows the probability of a particular observation to be 0, while the second one - to be 1
+```python
+predicted_proba = reg.predict_proba(x_test)
+predicted_proba
+```
+Output:
+```
+array([[0.55444773, 0.44555227],
+       [0.76163189, 0.23836811],
+       [0.71105208, 0.28894792],
+       ...,
+       [0.72974067, 0.27025933],
+       [0.71671029, 0.28328971],
+       [0.15718826, 0.84281174]])
+```
