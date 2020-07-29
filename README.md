@@ -60,18 +60,78 @@ pd.options.display.max_rows = 10
 
 display(raw_data)
 ```
+<img src="README_src/bankdf.PNG" alt="Dataframe" width=1000>
+
+```python
+#copy dataframe
+df = raw_data.copy()
+
+#dropping the following columns as we want to know what personal 
+#information leads to purchase of term deposit and not how successful the previous campaigns were
+df = df.drop(['contact','month','day_of_week','duration','campaign', 'pdays', 'previous', 'poutcome'], axis=1)
+
+#changing column 'y' to 'purchase' so it looks more intiutive
+df = df.rename(columns={"y": "purchased"})
+
 ```
-age	job	marital	education	default	housing	loan	contact	month	day_of_week	duration	campaign	pdays	previous	poutcome	emp.var.rate	cons.price.idx	cons.conf.idx	euribor3m	nr.employed	y
-0	56	housemaid	married	basic.4y	no	no	no	telephone	may	mon	261	1	999	0	nonexistent	1.1	93.994	-36.4	4.857	5191.0	no
-1	57	services	married	high.school	unknown	no	no	telephone	may	mon	149	1	999	0	nonexistent	1.1	93.994	-36.4	4.857	5191.0	no
-2	37	services	married	high.school	no	yes	no	telephone	may	mon	226	1	999	0	nonexistent	1.1	93.994	-36.4	4.857	5191.0	no
-3	40	admin.	married	basic.6y	no	no	no	telephone	may	mon	151	1	999	0	nonexistent	1.1	93.994	-36.4	4.857	5191.0	no
-4	56	services	married	high.school	no	no	yes	telephone	may	mon	307	1	999	0	nonexistent	1.1	93.994	-36.4	4.857	5191.0	no
-...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
-41183	73	retired	married	professional.course	no	yes	no	cellular	nov	fri	334	1	999	0	nonexistent	-1.1	94.767	-50.8	1.028	4963.6	yes
-41184	46	blue-collar	married	professional.course	no	no	no	cellular	nov	fri	383	1	999	0	nonexistent	-1.1	94.767	-50.8	1.028	4963.6	no
-41185	56	retired	married	university.degree	no	yes	no	cellular	nov	fri	189	2	999	0	nonexistent	-1.1	94.767	-50.8	1.028	4963.6	no
-41186	44	technician	married	professional.course	no	no	no	cellular	nov	fri	442	1	999	0	nonexistent	-1.1	94.767	-50.8	1.028	4963.6	yes
-41187	74	retired	married	professional.course	no	yes	no	cellular	nov	fri	239	3	999	1	failure	-1.1	94.767	-50.8	1.028	4963.6	no
-41188 rows × 21 columns
+
+```python
+# check if there are any other unwanted values such as 'unknown' or missing values in the following columns
+
+print("Unique values of 'default':" , df['default'].unique())
+print("Unique values of 'housing':" , df['housing'].unique())
+print("Unique values of 'loan':" , df['loan'].unique())
+print("Unique values of 'purchased':" , df['purchased'].unique())
+print("Unique values of 'job':" , df['job'].unique())
+print("Unique values of 'marital':" , df['marital'].unique())
+print("Unique values of 'education':" , df['education'].unique())
+
+```
+Output:
+
+```
+Unique values of 'default': ['no' 'unknown' 'yes']
+Unique values of 'housing': ['no' 'yes' 'unknown']
+Unique values of 'loan': ['no' 'yes' 'unknown']
+Unique values of 'purchased': ['no' 'yes']
+Unique values of 'job': ['housemaid' 'services' 'admin.' 'blue-collar' 'technician' 'retired'
+ 'management' 'unemployed' 'self-employed' 'unknown' 'entrepreneur'
+ 'student']
+Unique values of 'marital': ['married' 'single' 'divorced' 'unknown']
+Unique values of 'education': ['basic.4y' 'high.school' 'basic.6y' 'basic.9y' 'professional.course'
+ 'unknown' 'university.degree' 'illiterate']
+```
+
+```python
+#dropping unknown values
+df = df[df.default != 'unknown']
+df = df[df.housing != 'unknown']
+df = df[df.loan != 'unknown']
+df = df[df.education != 'unknown']
+df = df[df.job != 'unknown']
+df = df[df.marital != 'unknown']
+
+# check if there are any other unwanted values such as 'unknown' or missing values in the following columns
+
+print("Unique values of 'default':" , df['default'].unique())
+print("Unique values of 'housing':" , df['housing'].unique())
+print("Unique values of 'loan':" , df['loan'].unique())
+print("Unique values of 'purchased':" , df['purchased'].unique())
+print("Unique values of 'job':" , df['job'].unique())
+print("Unique values of 'marital':" , df['marital'].unique())
+print("Unique values of 'education':" , df['education'].unique())
+
+```
+
+Output:
+```
+Unique values of 'default': ['no' 'yes']
+Unique values of 'housing': ['no' 'yes']
+Unique values of 'loan': ['no' 'yes']
+Unique values of 'purchased': ['no' 'yes']
+Unique values of 'job': ['housemaid' 'services' 'admin.' 'technician' 'blue-collar' 'unemployed'
+ 'retired' 'entrepreneur' 'management' 'student' 'self-employed']
+Unique values of 'marital': ['married' 'single' 'divorced']
+Unique values of 'education': ['basic.4y' 'high.school' 'basic.6y' 'professional.course' 'basic.9y'
+ 'university.degree' 'illiterate']
 ```
