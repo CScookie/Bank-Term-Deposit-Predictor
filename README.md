@@ -50,6 +50,7 @@ Dataset from : http://archive.ics.uci.edu/ml/datasets/Bank+Marketing#
 
 # 1. Data Preprocessing
 
+### We start by importing the dataset as dataframe
 ```python
 #Importing dataset as dataframe
 
@@ -65,19 +66,18 @@ display(raw_data)
 ```python
 #copy dataframe
 df = raw_data.copy()
+```
 
-#dropping the following columns as we want to know what personal 
-#information leads to purchase of term deposit and not how successful the previous campaigns were
+### Dropping the following columns as we want to know what personal information leads to purchase of term deposit and not how successful the previous campaigns were. Followed by renaming column 'y' to 'purchase' so it looks more intiutive
+```python
 df = df.drop(['contact','month','day_of_week','duration','campaign', 'pdays', 'previous', 'poutcome'], axis=1)
 
 #changing column 'y' to 'purchase' so it looks more intiutive
 df = df.rename(columns={"y": "purchased"})
 
 ```
-
+### Check if there are any other unwanted values such as 'unknown' or missing values in the following columns
 ```python
-# check if there are any other unwanted values such as 'unknown' or missing values in the following columns
-
 print("Unique values of 'default':" , df['default'].unique())
 print("Unique values of 'housing':" , df['housing'].unique())
 print("Unique values of 'loan':" , df['loan'].unique())
@@ -102,8 +102,8 @@ Unique values of 'education': ['basic.4y' 'high.school' 'basic.6y' 'basic.9y' 'p
  'unknown' 'university.degree' 'illiterate']
 ```
 
+### From above output, there are 'unknown' values which are not good for our model training. These rows have to be dropped.
 ```python
-#dropping unknown values
 df = df[df.default != 'unknown']
 df = df[df.housing != 'unknown']
 df = df[df.loan != 'unknown']
@@ -112,7 +112,6 @@ df = df[df.job != 'unknown']
 df = df[df.marital != 'unknown']
 
 # check if there are any other unwanted values such as 'unknown' or missing values in the following columns
-
 print("Unique values of 'default':" , df['default'].unique())
 print("Unique values of 'housing':" , df['housing'].unique())
 print("Unique values of 'loan':" , df['loan'].unique())
