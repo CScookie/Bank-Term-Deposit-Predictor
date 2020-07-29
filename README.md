@@ -379,10 +379,11 @@ summary_table = summary_table.sort_values('Odds_ratio', ascending=False)
 summary_table
 ```
 Output:
+
 <img src="README_src/summarytable.PNG" alt="Summary Table" width=300>
 
 # 3. Model Testing
-### Assess the test accuracy of the model\
+### Assess the test accuracy of the model
 ```python
 reg.score(x_test,y_test)
 ```
